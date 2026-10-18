@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="stylesheet" href="./src/styles.css"></head><body>
+<!doctype html><html lang="az"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="stylesheet" href="./src/styles.css">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<meta name="theme-color" content="#0d6b80">
 <title>CrowdCast</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6,6 +10,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 
 
+</head><body>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -13,6 +18,7 @@
       <p>Hər avtobus xətti üçün: sabah harada avtobus çatmayacaq, onu ən ucuz haradan götürmək olar və gün ərzində nə baş verir.</p>
     </div>
     <div class="hctl">
+      <button id="install-app" class="primary" hidden>Tətbiqi quraşdır</button>
       <div class="field"><label class="label" for="routefilter">Xətt filtri</label><select id="routefilter" aria-label="Xətt filtri"></select></div>
       <div class="field"><label class="label" for="cap">Avtobus tutumu</label><input type="number" id="cap" min="40" max="180" step="5" value="100"></div>
       <div class="field"><label class="label" for="thr">Sıxlıq həddi <span id="thrv" class="num">85%</span></label><input type="range" id="thr" min="60" max="100" step="5" value="85"></div>
@@ -136,4 +142,5 @@
 
 
 <script src="./src/bootstrap.js"></script>
+<script src="./src/install.js"></script>
 </body></html>
