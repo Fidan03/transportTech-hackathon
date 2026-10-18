@@ -1,0 +1,139 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="stylesheet" href="./src/styles.css"></head><body>
+<title>CrowdCast</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Crowd<b>Cast</b></h1>
+      <p>Hər avtobus xətti üçün: sabah harada avtobus çatmayacaq, onu ən ucuz haradan götürmək olar və gün ərzində nə baş verir.</p>
+    </div>
+    <div class="hctl">
+      <div class="field"><label class="label" for="routefilter">Xətt filtri</label><select id="routefilter" aria-label="Xətt filtri"></select></div>
+      <div class="field"><label class="label" for="cap">Avtobus tutumu</label><input type="number" id="cap" min="40" max="180" step="5" value="100"></div>
+      <div class="field"><label class="label" for="thr">Sıxlıq həddi <span id="thrv" class="num">85%</span></label><input type="range" id="thr" min="60" max="100" step="5" value="85"></div>
+    </div>
+  </header>
+  <div class="ctlbar">
+    <span class="chip" id="daychip"></span>
+    <span class="chip real">Real: gündəlik gedişlər və trayektoriyalar (opendata.az)</span>
+    <span class="chip syn">Sintetik: saatlıq bölgü, tıxac, avtobus hərəkəti</span>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Rejim">
+    <button class="tab" role="tab" id="tab-plan" aria-selected="true" aria-controls="view-plan">1 · Sabahın planı<small>gecə 22:00-da hazırlanır</small></button>
+    <button class="tab" role="tab" id="tab-live" aria-selected="false" aria-controls="view-live">2 · Canlı nəzarət<small>gün ərzində</small></button>
+  </nav>
+
+  <!-- ===================== 1 · SABAHIN PLANI ===================== -->
+  <section id="view-plan" role="tabpanel" aria-labelledby="tab-plan" class="col">
+    <div class="panel ctlbar">
+      <div class="field"><span class="label">Vaxt pəncərəsi</span><div class="seg" id="winseg"></div></div>
+      <div class="field"><label class="label" for="maxkm">Maks. boş yürüş <span id="maxkmv" class="num">12 km</span></label><input type="range" id="maxkm" min="2" max="25" step="1" value="12"></div>
+      <label class="check"><input type="checkbox" id="cross" checked> Başqa xətlərin artıq avtobuslarından istifadə et</label>
+      <span class="grow"></span>
+      <button id="approveall" class="primary">Bütün əmrləri təsdiqlə</button>
+    </div>
+
+    <div class="strip" id="planstrip"></div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="phead">
+          <div><h2>Hansı xəttə avtobus çatmayacaq?</h2>
+            <div class="q" id="boardq"></div></div>
+        </div>
+        <div class="tablewrap"><table class="board" id="board"></table></div>
+        <div class="howto"><b>Necə oxumaq:</b> "Lazım" — proqnozlaşdırılan sərnişini sıxlıq həddini keçmədən daşımaq üçün lazım olan avtobus sayı. "Var" — mövcud cədvəldə xəttə ayrılan avtobuslar. Qırmızı balans çatışmazlıq, yaşıl balans isə başqa xəttə verilə bilən artıq avtobusdur. Sətrə klikləyin — aşağıda həmin xəttin detalı açılır.</div>
+      </div>
+      <div class="panel">
+        <div class="phead">
+          <div><h2>Köçürmə əmrləri</h2><div class="q">Çatışmazlıq ən ucuz mənbədən — depo ehtiyatından və ya artıq avtobusu olan xətdən — bağlanır. Ən kəskin xətt birinci gəlir.</div></div>
+          <span class="pill info" id="ordercount"></span>
+        </div>
+        <div class="list" id="orders"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="phead"><div><h2>Avtobuslar haradan haraya gedir?</h2><div class="q" id="flowq"></div></div></div>
+        <div class="flowsvg"><svg id="flow" viewBox="0 0 1000 640" role="img" aria-label="Köçürmə xəritəsi"></svg></div>
+        <div class="legend"><span><i class="bar" style="background:var(--crit)"></i>Çatışmazlıq olan xətt</span><span><i class="bar" style="background:var(--ok)"></i>Avtobus verən xətt</span><span><i style="background:var(--accent)"></i>Depo</span><span>→ köçürmə, rəqəm = avtobus sayı</span></div>
+      </div>
+      <div class="panel" id="detail">
+        <div class="phead"><div><h2 id="dtitle"></h2><div class="q">Seçilmiş xətt üzrə sabahın proqnozu və səbəb</div></div></div>
+        <p class="verdict" id="dverdict"></p>
+        <div class="label" style="margin-bottom:6px">Saat-saat: sərnişin tələbi və avtobusların rahat daşıya biləcəyi</div>
+        <div class="chartbox"><canvas id="hourChart" aria-label="Saatlıq tələb və tutum"></canvas></div>
+        <div class="label" style="margin:14px 0 6px">Real data: gündəlik gedişlər (iyul–sentyabr 2026)</div>
+        <div class="chartbox sm"><canvas id="histChart" aria-label="Real gündəlik gedişlər"></canvas></div>
+        <p class="note" id="histnote"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 2 · CANLI ===================== -->
+  <section id="view-live" role="tabpanel" aria-labelledby="tab-live" class="col" hidden>
+    <div class="panel livebar">
+      <div><div class="label">Simulyasiya saatı</div><div class="clock" id="clock">08:30</div></div>
+      <div class="timebar">
+        <input type="range" id="tslider" min="365" max="1405" step="1" value="510" aria-label="Simulyasiya saatı">
+        <div class="btnrow">
+          <button id="play" class="primary">▶ Oynat</button>
+          <button data-jump="510">Səhər pik 08:30</button>
+          <button data-jump="1095">Qəza 18:15</button>
+          <button data-jump="780">Gündüz 13:00</button>
+        </div>
+        <div class="sub">Bu saat günün hansı anına baxdığınızı göstərir, avtobusun xəttə çıxma vaxtı deyil. Xəttə çıxış vaxtları sağdakı "Növbəti çıxışlar" lövhəsindədir.</div>
+      </div>
+      <div class="col" style="gap:8px">
+        <div class="field"><span class="label">Ssenari</span>
+          <div class="seg" id="scenseg"><button data-s="base" aria-pressed="true">Plan olmadan</button><button data-s="plan" aria-pressed="false">Planla</button></div></div>
+        <div class="field"><span class="label">Xəritə</span>
+          <div class="seg" id="viewseg"><button data-v="3d" aria-pressed="true">3D</button><button data-v="2d" aria-pressed="false">2D</button></div></div>
+      </div>
+    </div>
+
+    <div class="strip four" id="livestrip"></div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="phead">
+          <div><h2>Harada problem var?</h2><div class="q" id="mapq"></div></div>
+          <div class="seg" id="layerseg"><button data-l="load" aria-pressed="true">Doluluq</button><button data-l="traffic" aria-pressed="false">Tıxac</button></div>
+        </div>
+        <div class="mapwrap"><div id="deckmap"></div><div class="mapnote" id="mapnote"></div></div>
+        <div class="legend" id="maplegend"></div>
+      </div>
+      <div class="col">
+        <div class="panel" id="sidepanel"></div>
+        <div class="panel">
+          <div class="phead"><div><h2>İndi nə etməli?</h2><div class="q">Planın görə bilmədiyi hadisələr üçün canlı tövsiyələr</div></div><span class="pill info" id="reccount"></span></div>
+          <div class="list" id="recs"></div>
+          <div class="label" style="margin:14px 0 4px">Qərar jurnalı</div>
+          <div class="tablewrap"><table class="log" id="log"></table></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="loadpanel">
+      <div class="phead"><div><h2>Xətt boyunca doluluq</h2><div class="q" id="loadq"></div></div><select id="dirsel" aria-label="İstiqamət"></select></div>
+      <div class="chartbox sm"><canvas id="loadChart" aria-label="Xətt boyunca doluluq"></canvas></div>
+    </div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://unpkg.com/deck.gl@8.9.36/dist.min.js"></script>
+
+
+<script src="./src/bootstrap.js"></script>
+</body></html>
